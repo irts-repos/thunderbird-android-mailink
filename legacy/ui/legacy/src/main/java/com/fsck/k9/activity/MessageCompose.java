@@ -223,6 +223,10 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
     private static final int REQUEST_MASK_RECIPIENT_PRESENTER = (1 << 8);
     private static final int REQUEST_MASK_LOADER_HELPER = (1 << 9);
     private static final int REQUEST_MASK_ATTACHMENT_PRESENTER = (1 << 10);
+// S3 MailLink picker (ADR irmail-0002). No high bits, so it is never treated as a masked request code.
+private static final int REQUEST_CODE_MAILINK = 0x4D4C;
+public static final String EXTRA_MAILINK_PICK_MODE = "net.thunderbird.android.mailink.PICK_MODE";
+public static final String EXTRA_MAILINK_TEXT = "net.thunderbird.android.mailink.TEXT";
     private static final int REQUEST_MASK_MESSAGE_BUILDER = (1 << 11);
 
 
@@ -1031,6 +1035,13 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         isInSubActivity = false;
 
+        if (requestCode == REQUEST_CODE_MAILINK) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                insertMailLinkText(data.getStringExtra(EXTRA_MAILINK_TEXT));
+            }
+            return;
+        }
+
         // Only if none of the high 16 bits are set it might be one of our request codes
         if ((requestCode & REQUEST_CODE_MASK) == 0) {
             if ((requestCode & REQUEST_MASK_MESSAGE_BUILDER) == REQUEST_MASK_MESSAGE_BUILDER) {
@@ -1247,6 +1258,25 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
         recipientPresenter.onCryptoPgpClickDisable();
     }
 
+    /** Opens the S3 MailLink screen. The result is the link text, which is inserted into the body. */
+    private void startMailLinkPicker() {
+        Intent intent = new Intent();
+        intent.setClassName(getPackageName(), "net.thunderbird.android.mailink.MailLinkActivity");
+        intent.putExtra(EXTRA_MAILINK_PICK_MODE, true);
+        startActivityForResult(intent, REQUEST_CODE_MAILINK);
+    }
+
+    /** Inserts the MailLink text at the cursor, on its own lines. Nothing is attached as a MIME part. */
+    private void insertMailLinkText(String text) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        android.text.Editable body = messageContentView.getText();
+        int position = Math.max(0, Math.min(messageContentView.getSelectionStart(), body.length()));
+        String prefix = (position == 0 || body.charAt(position - 1) == '\n') ? "" : "\n\n";
+        body.insert(position, prefix + text + "\n");
+    }
+
     @Override
     public void onAttachmentAdded() {
         changesMadeSinceLastSave = true;
@@ -1304,8 +1334,8 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
         } else if (id == R.id.openpgp_sign_only_disable) {
             recipientPresenter.onMenuSetSignOnly(false);
         } else if (id == R.id.add_attachment) {
-            View attachmentMenuAnchor = findViewById(com.fsck.k9.ui.base.R.id.toolbar).findViewById(R.id.add_attachment);
-            showPopupMenu(attachmentMenuAnchor);
+            // Only S3 MailLink is offered for new attachments. Normal MIME attachments are removed.
+            startMailLinkPicker();
         } else if (id == R.id.read_receipt) {
             onReadReceipt();
         } else {
