@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mailink_title">S3 MailLink</string>
+    <string name="mailink_enroll_intro">Masukkan email kantor Anda. Kode 6 digit akan dikirim ke mailbox tersebut.</string>
+    <string name="mailink_email_label">Email kantor</string>
+    <string name="mailink_code_label">Kode dari email</string>
+    <string name="mailink_send_code">Kirim kode</string>
+    <string name="mailink_verify_code">Verifikasi</string>
+    <string name="mailink_pick_file">Pilih file</string>
+    <string name="mailink_take_photo">Ambil foto</string>
+    <string name="mailink_upload">Unggah ke S3</string>
+    <string name="mailink_uploading">Mengunggah… %1$d%%</string>
+    <string name="mailink_cancel">Batal</string>
+    <string name="mailink_retry">Coba lagi</string>
+    <string name="mailink_upload_done">Upload selesai. Link siap dikirim.</string>
+    <string name="mailink_copy_link">Salin link</string>
+    <string name="mailink_insert_into_email">Sisipkan ke email</string>
+    <string name="mailink_sign_out">Keluar dari perangkat ini</string>
+    <string name="mailink_settings">Pengaturan</string>
+    <string name="mailink_back">Kembali</string>
+    <string name="mailink_status_enrolled">Status: perangkat terdaftar</string>
+    <string name="mailink_status_not_enrolled">Status: belum terdaftar</string>
+    <string name="mailink_server_label">Server: %1$s</string>
+    <string name="mailink_sign_out_hint">Keluar akan menghapus token dari perangkat ini. Anda perlu daftar lagi dengan email kantor.</string>
+    <string name="mailink_msg_email_required">Isi email kantor Anda.</string>
+    <string name="mailink_msg_code_sent">Jika email terdaftar sebagai karyawan aktif, kode sudah dikirim. Periksa juga folder spam.</string>
+    <string name="mailink_msg_code_invalid">Kode salah atau sudah kedaluwarsa.</string>
+    <string name="mailink_msg_enrolled">Perangkat terdaftar.</string>
+    <string name="mailink_msg_not_enrolled">Perangkat belum terdaftar. Daftar ulang dengan email kantor.</string>
+    <string name="mailink_msg_network">Tidak bisa terhubung ke layanan. Periksa koneksi lalu coba lagi.</string>
+    <string name="mailink_msg_too_large">File terlalu besar untuk MailLink.</string>
+    <string name="mailink_msg_rejected">Permintaan ditolak server.</string>
+    <string name="mailink_msg_upload_done">Upload selesai.</string>
+</resources>

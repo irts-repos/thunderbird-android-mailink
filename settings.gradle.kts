@@ -141,6 +141,8 @@ include(
     ":feature:mail:message:api",
     ":feature:mail:message:composer:api",
     ":feature:mail:message:composer:internal",
+    ":feature:mail:mailink:api",
+    ":feature:mail:mailink:internal",
     ":feature:mail:message:list:api",
     ":feature:mail:message:list:internal",
     ":feature:mail:message:export:api",
