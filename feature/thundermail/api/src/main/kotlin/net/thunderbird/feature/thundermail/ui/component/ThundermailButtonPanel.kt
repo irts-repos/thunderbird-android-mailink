@@ -27,19 +27,25 @@ fun ThundermailButtonPanel(
     modifier: Modifier = Modifier,
     featureFlagProvider: FeatureFlagProvider = koinInject(),
 ) {
-    if (featureFlagProvider.provide(GeneratedFeatureFlagKey.THUNDERMAIL_ONBOARDING_ENABLED).isEnabled()) {
-        Column(
-            modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(BoltTheme.spacings.quadruple),
-            horizontalAlignment = Alignment.CenterHorizontally,
+    // The feature flag controls only the Thundermail sign-in button. The QR scan button is always shown,
+    // because it is used to connect an account from an existing desktop configuration.
+    val thundermailSignInEnabled = featureFlagProvider
+        .provide(GeneratedFeatureFlagKey.THUNDERMAIL_ONBOARDING_ENABLED)
+        .isEnabled()
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(BoltTheme.spacings.quadruple),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(
+                space = BoltTheme.spacings.double,
+                alignment = Alignment.CenterHorizontally,
+            ),
+            verticalArrangement = Arrangement.spacedBy(BoltTheme.spacings.default),
         ) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(
-                    space = BoltTheme.spacings.double,
-                    alignment = Alignment.CenterHorizontally,
-                ),
-                verticalArrangement = Arrangement.spacedBy(BoltTheme.spacings.default),
-            ) {
+            if (thundermailSignInEnabled) {
                 ButtonOutlined(
                     text = stringResource(R.string.feature_thundermail_button_panel_sign_in),
                     onClick = onThundermailClick,
@@ -53,32 +59,39 @@ fun ThundermailButtonPanel(
                     ),
                     icon = Icons.Filled.Thundermail,
                 )
-                ButtonOutlined(
-                    text = stringResource(R.string.feature_thundermail_button_panel_scan_qr_code),
-                    onClick = onScanQrCodeClick,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = BoltTheme.colors.primary,
-                    ),
-                    shape = ButtonDefaults.outlinedShape(
-                        border = ButtonDefaults.outlinedButtonBorder(
-                            color = BoltTheme.colors.primary,
-                        ),
-                    ),
-                    icon = Icons.Outlined.QrCode,
-                )
             }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(BoltTheme.spacings.quarter),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                DividerHorizontal(modifier = Modifier.weight(weight = 1f))
-                TextBodySmall(
-                    text = stringResource(R.string.feature_thundermail_button_panel_sign_in_or),
-                    modifier = Modifier.weight(weight = 0.25f),
-                    textAlign = TextAlign.Center,
-                )
-                DividerHorizontal(modifier = Modifier.weight(weight = 1f))
-            }
+            ButtonOutlined(
+                text = stringResource(R.string.feature_thundermail_button_panel_scan_qr_code),
+                onClick = onScanQrCodeClick,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = BoltTheme.colors.primary,
+                ),
+                shape = ButtonDefaults.outlinedShape(
+                    border = ButtonDefaults.outlinedButtonBorder(
+                        color = BoltTheme.colors.primary,
+                    ),
+                ),
+                icon = Icons.Outlined.QrCode,
+            )
         }
+        if (thundermailSignInEnabled) {
+            OrDivider()
+        }
+    }
+}
+
+@Composable
+private fun OrDivider() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(BoltTheme.spacings.quarter),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        DividerHorizontal(modifier = Modifier.weight(weight = 1f))
+        TextBodySmall(
+            text = stringResource(R.string.feature_thundermail_button_panel_sign_in_or),
+            modifier = Modifier.weight(weight = 0.25f),
+            textAlign = TextAlign.Center,
+        )
+        DividerHorizontal(modifier = Modifier.weight(weight = 1f))
     }
 }

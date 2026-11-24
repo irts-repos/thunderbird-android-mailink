@@ -10,17 +10,26 @@ val testCoverageEnabled = providers
     .gradleProperty("testCoverageEnabled")
     .isPresent
 
+private val mailinkApiBaseUrlDefault =
+    "https://mfugslnzvuj6ogbgzz72dmjzd40rrhdf.lambda-url.ap-southeast-1.on.aws"
+
 android {
     namespace = "net.thunderbird.android"
 
     defaultConfig {
-        applicationId = "net.thunderbird.android"
+        applicationId = "id.indoretreading.mail"
         testApplicationId = "net.thunderbird.android.tests"
 
         versionCode = 4
         versionName = "27.0"
 
         buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Thunderbird for Android\"")
+        // MailLink backend (Lambda Function URL). Public endpoint, not a secret. Override with -Pmailink.api.url=...
+        buildConfigField(
+            "String",
+            "MAILINK_API_BASE_URL",
+            "\"${providers.gradleProperty("mailink.api.url").getOrElse(mailinkApiBaseUrlDefault)}\"",
+        )
     }
 
     androidResources {
@@ -227,6 +236,9 @@ dependencies {
     implementation(projects.core.ui.compose.common)
     implementation(projects.core.ui.legacy.theme2.thunderbird)
     implementation(projects.feature.launcher)
+    implementation(projects.feature.mail.mailink.api)
+    implementation(projects.feature.mail.mailink.internal)
+    implementation(libs.okhttp)
 
     implementation(projects.legacy.core)
     implementation(projects.legacy.ui.legacy)

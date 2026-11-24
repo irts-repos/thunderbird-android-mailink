@@ -75,16 +75,21 @@
       "debug": {
         "display_in_app_notifications": true,
         "use_notification_sender_for_system_notifications": true,
-        "message_view_action_export_eml": true
+        "message_view_action_export_eml": true,
+        "thundermail_onboarding_enabled": false
       },
       "daily": {
         "display_in_app_notifications": true,
-        "message_view_action_export_eml": true
+        "message_view_action_export_eml": true,
+        "thundermail_onboarding_enabled": false
       },
       "beta": {
-        "display_in_app_notifications": true
+        "display_in_app_notifications": true,
+        "thundermail_onboarding_enabled": false
       },
-      "release": {}
+      "release": {
+        "thundermail_onboarding_enabled": false
+      }
     },
     "k9": {
       "debug": {
