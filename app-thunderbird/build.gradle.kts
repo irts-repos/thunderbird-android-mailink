@@ -20,8 +20,8 @@ android {
         applicationId = "id.indoretreading.mail"
         testApplicationId = "net.thunderbird.android.tests"
 
-        versionCode = 4
-        versionName = "27.0"
+        versionCode = 1
+        versionName = "0.1.0"
 
         buildConfigField("String", "CLIENT_INFO_APP_NAME", "\"Thunderbird for Android\"")
         // MailLink backend (Lambda Function URL). Public endpoint, not a secret. Override with -Pmailink.api.url=...
