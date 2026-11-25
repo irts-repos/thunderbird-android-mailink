@@ -126,14 +126,16 @@ class MailLinkScreenModelTest {
     }
 
     @Test
-    fun `sign out clears the token and resets the screen`() = runTest {
+    fun `sign out clears the token, revokes it on the server and resets the screen`() = runTest {
         val tokens = FakeTokenStore(stored = "device-token")
-        val testSubject = MailLinkScreenModel(FakeClient(), tokens, this)
+        val client = FakeClient()
+        val testSubject = MailLinkScreenModel(client, tokens, this)
 
         testSubject.signOut()
         advanceUntilIdle()
 
         assertThat(tokens.stored).isNull()
+        assertThat(client.revokedTokens).isEqualTo(listOf("device-token"))
         assertThat(testSubject.state.value.enrolled).isEqualTo(false)
     }
 
@@ -168,6 +170,13 @@ class MailLinkScreenModelTest {
         }
 
         override suspend fun verifyEnrollmentCode(email: String, code: String): MailLinkResult<String> = verifyResult
+
+        val revokedTokens = mutableListOf<String>()
+
+        override suspend fun revokeDeviceToken(token: String): MailLinkResult<Unit> {
+            revokedTokens.add(token)
+            return MailLinkResult.Success(Unit)
+        }
 
         override suspend fun upload(
             token: String,

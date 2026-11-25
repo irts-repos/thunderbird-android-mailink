@@ -46,7 +46,7 @@ class MailLinkBodyBuilderTest {
 
         val result = testSubject.appendToHtml(html, listOf(link))
 
-        assertThat(result).contains("<ul><li>Jadwal Migrasi.xlsx (10 KB): ")
+        assertThat(result).contains("<strong>Jadwal Migrasi.xlsx</strong> (10 KB)")
         assertThat(result.indexOf("</body>")).isEqualTo(result.lastIndexOf("</body>"))
         assertThat(result.endsWith("</body></html>")).isEqualTo(true)
     }
@@ -55,7 +55,7 @@ class MailLinkBodyBuilderTest {
     fun `html without body tag appends the block`() {
         val result = testSubject.appendToHtml("<p>Halo</p>", listOf(link))
 
-        assertThat(result.startsWith("<p>Halo</p><div>")).isEqualTo(true)
+        assertThat(result.startsWith("<p>Halo</p><div style=")).isEqualTo(true)
     }
 
     @Test

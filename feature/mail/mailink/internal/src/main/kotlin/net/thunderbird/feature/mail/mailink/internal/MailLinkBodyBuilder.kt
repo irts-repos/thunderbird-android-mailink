@@ -31,10 +31,13 @@ object MailLinkBodyBuilder {
     fun appendToHtml(html: String, links: List<MailLinkAttachment>): String {
         if (links.isEmpty()) return html
         val items = links.joinToString(separator = "") { link ->
-            "<li>${escapeHtml(link.fileName)} (${formatSize(link.sizeBytes)}): " +
-                "<a href=\"${escapeHtml(link.url)}\">${escapeHtml(link.url)}</a></li>"
+            "<div style=\"margin:0 0 8px 0\"><strong>${escapeHtml(link.fileName)}</strong> " +
+                "(${formatSize(link.sizeBytes)})<br>" +
+                "<a href=\"${escapeHtml(link.url)}\" style=\"color:#1a5fb4\">${escapeHtml(link.url)}</a></div>"
         }
-        val block = "<div><p>${escapeHtml(HEADING)}</p><ul>$items</ul></div>"
+        val block = "<div style=\"margin:12px 0;padding:12px 14px;border:1px solid #d0d7de;border-radius:8px;" +
+            "font-family:sans-serif;font-size:14px;line-height:1.5\">" +
+            "<div style=\"margin:0 0 8px 0;color:#57606a\">${escapeHtml(HEADING)}</div>$items</div>"
         val closingBody = html.lastIndexOf("</body>", ignoreCase = true)
         return if (closingBody >= 0) {
             html.substring(0, closingBody) + block + html.substring(closingBody)

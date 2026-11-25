@@ -13,6 +13,9 @@ interface MailLinkClient {
     /** Exchanges the emailed code for a device token. */
     suspend fun verifyEnrollmentCode(email: String, code: String): MailLinkResult<String>
 
+    /** Revokes the device [token] on the server. Callers should still clear the local token if this fails. */
+    suspend fun revokeDeviceToken(token: String): MailLinkResult<Unit>
+
     /**
      * Uploads one file with the device [token]. [onProgress] receives values in 0..100.
      * The returned attachment carries the CloudFront link to put in the email body.

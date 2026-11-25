@@ -30,6 +30,7 @@ import net.thunderbird.components.ui.bolt.atom.text.TextBodyMedium
 import net.thunderbird.components.ui.bolt.molecule.input.TextInput
 import net.thunderbird.components.ui.bolt.organism.TopAppBar
 import net.thunderbird.components.ui.bolt.template.Scaffold
+import net.thunderbird.feature.mail.mailink.api.MailLinkAttachment
 import net.thunderbird.feature.mail.mailink.api.MailLinkClient
 import net.thunderbird.feature.mail.mailink.api.MailLinkTokenStore
 import net.thunderbird.feature.mail.mailink.api.MailLinkUploadState
@@ -40,7 +41,8 @@ import net.thunderbird.feature.mail.mailink.internal.R
  * MailLink screen: enrol with the emailed code, pick one file, upload to S3, copy the link.
  * Logs nothing: no email, code, token, file name, or URL is written to logcat.
  *
- * [onInsertLink] is set only when the screen was opened from the composer. It receives the text to insert.
+ * [onInsertLink] is set only when the screen was opened from the composer. It receives the uploaded file,
+ * so the caller can build the plain text and HTML.
  */
 @Composable
 fun MailLinkScreen(
@@ -48,7 +50,7 @@ fun MailLinkScreen(
     tokenStore: MailLinkTokenStore,
     modifier: Modifier = Modifier,
     serverUrl: String = "",
-    onInsertLink: ((String) -> Unit)? = null,
+    onInsertLink: ((MailLinkAttachment) -> Unit)? = null,
     createCameraUri: (() -> Uri)? = null,
 ) {
     val scope = rememberCoroutineScope()
@@ -158,7 +160,7 @@ private fun FileSection(
     model: MailLinkScreenModel,
     onPickFile: () -> Unit,
     onTakePhoto: (() -> Unit)?,
-    onInsertLink: ((String) -> Unit)?,
+    onInsertLink: ((MailLinkAttachment) -> Unit)?,
 ) {
     val context = LocalContext.current
     ButtonOutlined(
@@ -182,7 +184,7 @@ private fun FileSection(
         onInsertLink?.let { insert ->
             ButtonFilled(
                 text = stringResource(R.string.mailink_insert_into_email),
-                onClick = { insert(MailLinkBodyBuilder.appendToPlainText("", listOf(link))) },
+                onClick = { insert(link) },
             )
         }
         ButtonOutlined(

@@ -163,6 +163,18 @@ class OkHttpMailLinkClientTest {
     }
 
     @Test
+    fun `logout sends the token in the header and succeeds on 200`() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"status\":\"logged_out\"}"))
+
+        val result = testSubject.revokeDeviceToken("tok-123")
+
+        assertThat(result).isEqualTo(MailLinkResult.Success(Unit))
+        val recorded = server.takeRequest()
+        assertThat(recorded.path).isEqualTo("/v1/enroll/logout")
+        assertThat(recorded.getHeader("Authorization")).isEqualTo("Bearer tok-123")
+    }
+
+    @Test
     fun `constructor refuses http base url in production mode`() {
         val failed = runCatching {
             OkHttpMailLinkClient(baseUrl = "http://mail.example", httpClient = OkHttpClient())

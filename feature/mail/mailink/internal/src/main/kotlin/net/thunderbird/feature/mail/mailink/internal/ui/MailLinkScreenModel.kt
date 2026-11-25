@@ -118,8 +118,16 @@ class MailLinkScreenModel(
         }
     }
 
+    /**
+     * Clears the token on this device at once, then revokes it on the server. A failed revoke does not keep the
+     * user signed in here. The server token then expires after its idle period.
+     */
     fun signOut() {
+        val token = tokenStore.getToken()
         tokenStore.clearToken()
+        if (token != null) {
+            scope.launch { client.revokeDeviceToken(token) }
+        }
         cancelUpload()
         picked = null
         _state.update { MailLinkUiState(enrolled = false) }

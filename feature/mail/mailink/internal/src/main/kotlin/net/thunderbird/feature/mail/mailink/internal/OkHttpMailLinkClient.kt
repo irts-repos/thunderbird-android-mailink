@@ -26,6 +26,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
  *
  * [requireHttps] is true in the app. Tests may turn it off to talk to a local server.
  */
+@Suppress("TooManyFunctions")
 class OkHttpMailLinkClient(
     private val baseUrl: String,
     private val httpClient: OkHttpClient,
@@ -69,6 +70,17 @@ class OkHttpMailLinkClient(
 
             else -> failure(MailLinkFailureReason.REJECTED)
         }
+    }
+
+    @Suppress("ReturnCount")
+    override suspend fun revokeDeviceToken(token: String): MailLinkResult<Unit> {
+        val request = Request.Builder()
+            .url("$base/v1/enroll/logout")
+            .header("Authorization", "Bearer $token")
+            .post(ByteArray(0).toRequestBody(null))
+            .build()
+        val (status, _) = execute(request) ?: return failure(MailLinkFailureReason.NETWORK)
+        return if (status == OK) MailLinkResult.Success(Unit) else failure(MailLinkFailureReason.REJECTED)
     }
 
     @Suppress("ReturnCount")
