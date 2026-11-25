@@ -1,6 +1,7 @@
 package com.fsck.k9.message;
 
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,8 @@ public abstract class MessageBuilder {
     private Identity identity;
     private SimpleMessageFormat messageFormat;
     private String text;
+    private String mailLinkHtml = "";
+    private List<String> mailLinkPlainBlocks = new ArrayList<>();
     private List<Attachment> attachments;
     private Map<String, Attachment> inlineAttachments;
     private String signature;
@@ -165,14 +168,17 @@ public abstract class MessageBuilder {
         // Build the body.
         // TODO FIXME - body can be either an HTML or Text part, depending on whether we're in
         // HTML mode or not.  Should probably fix this so we don't mix up html and text parts.
-        TextBody body = buildText(isDraft);
+        // S3 MailLink blocks (see IR Mail ADR irmail-0002) are HTML only. They are added to the HTML part of a
+        // multipart/alternative message, and the plain text part stays as typed.
+        boolean withMailLinkHtml = !isDraft && !mailLinkHtml.isEmpty();
+        TextBody body = withMailLinkHtml ? buildMailLinkHtmlBody(isDraft) : buildText(isDraft);
 
         // text/plain part when messageFormat == MessageFormat.HTML
         TextBody bodyPlain = null;
 
         final boolean hasAttachments = !attachments.isEmpty();
 
-        if (messageFormat == SimpleMessageFormat.HTML) {
+        if (messageFormat == SimpleMessageFormat.HTML || withMailLinkHtml) {
             // HTML message (with alternative text part)
 
             // This is the compiled MIME part for an HTML message.
@@ -223,6 +229,30 @@ public abstract class MessageBuilder {
             // Add the identity to the message.
             message.addHeader(K9.IDENTITY_HEADER, buildIdentityHeader(body, bodyPlain));
         }
+    }
+
+    /**
+     * HTML version of the body with the MailLink blocks placed before the closing body tag. The plain text lines
+     * that the composer inserted for the links are left out here, because the HTML block already shows them.
+     */
+    private TextBody buildMailLinkHtmlBody(boolean isDraft) {
+        String typedText = text;
+        String htmlText = typedText;
+        for (String plainBlock : mailLinkPlainBlocks) {
+            htmlText = htmlText.replace(plainBlock, "");
+        }
+        String html;
+        text = htmlText;
+        try {
+            html = buildText(isDraft, SimpleMessageFormat.HTML).getRawText();
+        } finally {
+            text = typedText;
+        }
+        int end = html.lastIndexOf(TextBodyBuilder.HTML_AND_BODY_END);
+        String withLinks = end >= 0
+                ? html.substring(0, end) + mailLinkHtml + html.substring(end)
+                : html + mailLinkHtml;
+        return new TextBody(withLinks);
     }
 
     private String buildIdentityHeader(TextBody body, TextBody bodyPlain) {
@@ -433,6 +463,18 @@ public abstract class MessageBuilder {
 
     public MessageBuilder setMessageFormat(SimpleMessageFormat messageFormat) {
         this.messageFormat = messageFormat;
+        return this;
+    }
+
+    /** HTML blocks for S3 MailLink links that are still in the body. Empty for drafts. */
+    public MessageBuilder setMailLinkHtml(String mailLinkHtml) {
+        this.mailLinkHtml = mailLinkHtml == null ? "" : mailLinkHtml;
+        return this;
+    }
+
+    /** Plain text lines inserted for the MailLink links that are still in the body. */
+    public MessageBuilder setMailLinkPlainBlocks(List<String> plainBlocks) {
+        this.mailLinkPlainBlocks = plainBlocks == null ? new ArrayList<>() : new ArrayList<>(plainBlocks);
         return this;
     }
 

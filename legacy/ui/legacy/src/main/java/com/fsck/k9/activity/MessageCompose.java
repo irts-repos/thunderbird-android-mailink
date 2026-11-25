@@ -199,6 +199,7 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
     private static final String STATE_KEY_SOURCE_MESSAGE_PROCED =
             "com.fsck.k9.activity.MessageCompose.stateKeySourceMessageProced";
     private static final String STATE_KEY_DRAFT_ID = "com.fsck.k9.activity.MessageCompose.draftId";
+    private static final String STATE_KEY_MAILLINK_BLOCKS = "com.fsck.k9.activity.MessageCompose.mailLinkBlocks";
     private static final String STATE_IDENTITY_CHANGED =
             "com.fsck.k9.activity.MessageCompose.identityChanged";
     private static final String STATE_IDENTITY =
@@ -227,6 +228,8 @@ public class MessageCompose extends BaseActivity implements OnClickListener,
 private static final int REQUEST_CODE_MAILINK = 0x4D4C;
 public static final String EXTRA_MAILINK_PICK_MODE = "net.thunderbird.android.mailink.PICK_MODE";
 public static final String EXTRA_MAILINK_TEXT = "net.thunderbird.android.mailink.TEXT";
+public static final String EXTRA_MAILINK_HTML = "net.thunderbird.android.mailink.HTML";
+public static final String EXTRA_MAILINK_URL = "net.thunderbird.android.mailink.URL";
     private static final int REQUEST_MASK_MESSAGE_BUILDER = (1 << 11);
 
 
@@ -294,6 +297,8 @@ public static final String EXTRA_MAILINK_TEXT = "net.thunderbird.android.mailink
 
     private RecipientPresenter recipientPresenter;
     private MessageBuilder currentMessageBuilder;
+    // S3 MailLink links inserted in this message: {URL, plain text lines, HTML block}. Not kept across process death.
+    private final java.util.List<String[]> mailLinkBlocks = new java.util.ArrayList<>();
     private ReplyToPresenter replyToPresenter;
     private boolean finishAfterDraftSaved;
     private boolean alreadyNotifiedUserOfEmptySubject = false;
@@ -471,6 +476,8 @@ public static final String EXTRA_MAILINK_TEXT = "net.thunderbird.android.mailink
              * This data gets used in onCreate, so grab it here instead of onRestoreInstanceState
              */
             relatedMessageProcessed = savedInstanceState.getBoolean(STATE_KEY_SOURCE_MESSAGE_PROCED, false);
+            // MailLink blocks are not in the draft, so keep them across activity recreation.
+            restoreMailLinkBlocks(savedInstanceState.getStringArrayList(STATE_KEY_MAILLINK_BLOCKS));
         }
 
         IntentData intentData = indentDataMapper.initFromIntent(intent);
@@ -770,6 +777,7 @@ public static final String EXTRA_MAILINK_TEXT = "net.thunderbird.android.mailink
         outState.putString(STATE_REFERENCES, referencedMessageIds);
         outState.putBoolean(STATE_KEY_READ_RECEIPT, requestReadReceipt);
         outState.putBoolean(STATE_KEY_CHANGES_MADE_SINCE_LAST_SAVE, changesMadeSinceLastSave);
+        outState.putStringArrayList(STATE_KEY_MAILLINK_BLOCKS, flattenMailLinkBlocks());
         outState.putBoolean(STATE_ALREADY_NOTIFIED_USER_OF_EMPTY_SUBJECT, alreadyNotifiedUserOfEmptySubject);
         outState.putIntegerArrayList(STATE_ACTIVE_IN_APP_NOTIFICATIONS, new ArrayList<>(activeInAppNotifications));
 
@@ -863,6 +871,8 @@ public static final String EXTRA_MAILINK_TEXT = "net.thunderbird.android.mailink
                 .setReplyTo(replyToPresenter.getAddresses())
                 .setMessageFormat(currentMessageFormat)
                 .setText(CrLfConverter.toCrLf(messageContentView.getText()))
+                .setMailLinkHtml(isDraft ? "" : buildMailLinkHtmlForSend())
+                .setMailLinkPlainBlocks(isDraft ? null : buildMailLinkPlainBlocksForSend())
                 .setAttachments(attachmentPresenter.getAttachments())
                 .setInlineAttachments(attachmentPresenter.getInlineAttachments())
                 .setSignature(CrLfConverter.toCrLf(signatureView.getText()))
@@ -1038,6 +1048,12 @@ public static final String EXTRA_MAILINK_TEXT = "net.thunderbird.android.mailink
         if (requestCode == REQUEST_CODE_MAILINK) {
             if (resultCode == Activity.RESULT_OK && data != null) {
                 insertMailLinkText(data.getStringExtra(EXTRA_MAILINK_TEXT));
+                String url = data.getStringExtra(EXTRA_MAILINK_URL);
+                String plain = data.getStringExtra(EXTRA_MAILINK_TEXT);
+                String html = data.getStringExtra(EXTRA_MAILINK_HTML);
+                if (url != null && plain != null && html != null) {
+                    mailLinkBlocks.add(new String[] {url, plain, html});
+                }
             }
             return;
         }
@@ -1264,6 +1280,54 @@ public static final String EXTRA_MAILINK_TEXT = "net.thunderbird.android.mailink
         intent.setClassName(getPackageName(), "net.thunderbird.android.mailink.MailLinkActivity");
         intent.putExtra(EXTRA_MAILINK_PICK_MODE, true);
         startActivityForResult(intent, REQUEST_CODE_MAILINK);
+    }
+
+    /**
+     * HTML blocks for the MailLink links that are still in the body. A block is dropped when its link was
+     * removed from the text, so the HTML part never contains a link the plain text does not have.
+     */
+    private String buildMailLinkHtmlForSend() {
+        String body = messageContentView.getText().toString();
+        StringBuilder html = new StringBuilder();
+        for (String[] block : mailLinkBlocks) {
+            if (body.contains(block[0])) {
+                html.append(block[2]);
+            }
+        }
+        return html.toString();
+    }
+
+    /** Saves the MailLink blocks as one flat list of URL, plain text and HTML triples. */
+    private java.util.ArrayList<String> flattenMailLinkBlocks() {
+        java.util.ArrayList<String> flat = new java.util.ArrayList<>();
+        for (String[] block : mailLinkBlocks) {
+            flat.add(block[0]);
+            flat.add(block[1]);
+            flat.add(block[2]);
+        }
+        return flat;
+    }
+
+    private void restoreMailLinkBlocks(java.util.ArrayList<String> flat) {
+        mailLinkBlocks.clear();
+        if (flat == null) {
+            return;
+        }
+        for (int i = 0; i + 2 < flat.size(); i += 3) {
+            mailLinkBlocks.add(new String[] {flat.get(i), flat.get(i + 1), flat.get(i + 2)});
+        }
+    }
+
+    /** Plain text lines of the MailLink links that are still in the body. The HTML part leaves these out. */
+    private java.util.List<String> buildMailLinkPlainBlocksForSend() {
+        String body = messageContentView.getText().toString();
+        java.util.List<String> plainBlocks = new java.util.ArrayList<>();
+        for (String[] block : mailLinkBlocks) {
+            if (body.contains(block[0])) {
+                plainBlocks.add(block[1]);
+            }
+        }
+        return plainBlocks;
     }
 
     /** Inserts the MailLink text at the cursor, on its own lines. Nothing is attached as a MIME part. */
