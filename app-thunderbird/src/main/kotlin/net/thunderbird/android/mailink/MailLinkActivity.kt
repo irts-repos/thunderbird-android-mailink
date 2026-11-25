@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import app.k9mail.core.android.common.camera.io.CaptureImageFileWriter
 import net.thunderbird.android.BuildConfig
 import net.thunderbird.components.ui.bolt.theme.thunderbird.ThunderbirdBoltTheme
+import net.thunderbird.feature.mail.mailink.api.MailLinkAttachment
 import net.thunderbird.feature.mail.mailink.api.MailLinkClient
 import net.thunderbird.feature.mail.mailink.api.MailLinkTokenStore
 import net.thunderbird.feature.mail.mailink.internal.MailLinkBodyBuilder
@@ -34,15 +35,19 @@ class MailLinkActivity : ComponentActivity() {
                     client = client,
                     tokenStore = tokenStore,
                     serverUrl = BuildConfig.MAILINK_API_BASE_URL,
-                    onInsertLink = if (pickMode) ::returnTextToComposer else null,
+                    onInsertLink = if (pickMode) ::returnLinkToComposer else null,
                     createCameraUri = { captureImageFileWriter.getFileUri() },
                 )
             }
         }
     }
 
-    private fun returnTextToComposer(text: String) {
-        setResult(Activity.RESULT_OK, Intent().putExtra(EXTRA_TEXT, text))
+    private fun returnLinkToComposer(link: MailLinkAttachment) {
+        val result = Intent()
+            .putExtra(EXTRA_TEXT, MailLinkBodyBuilder.appendToPlainText("", listOf(link)))
+            .putExtra(EXTRA_HTML, MailLinkBodyBuilder.appendToHtml("", listOf(link)))
+            .putExtra(EXTRA_URL, link.url)
+        setResult(Activity.RESULT_OK, result)
         finish()
     }
 
@@ -50,5 +55,7 @@ class MailLinkActivity : ComponentActivity() {
         // Must match MessageCompose.EXTRA_MAILINK_PICK_MODE / EXTRA_MAILINK_TEXT.
         const val EXTRA_PICK_MODE = "net.thunderbird.android.mailink.PICK_MODE"
         const val EXTRA_TEXT = "net.thunderbird.android.mailink.TEXT"
+        const val EXTRA_HTML = "net.thunderbird.android.mailink.HTML"
+        const val EXTRA_URL = "net.thunderbird.android.mailink.URL"
     }
 }

@@ -79,16 +79,11 @@
                 />
         </receiver>
 
-        <!-- S3 MailLink test screen (ADR irmail-0002). Opens from the app launcher. -->
+        <!-- S3 MailLink screen (ADR irmail-0002). Not a launcher entry: it is opened from the IR Mail composer only. -->
         <activity
             android:name="net.thunderbird.android.mailink.MailLinkActivity"
-            android:exported="true"
-            android:label="@string/mailink_launcher_label">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:exported="false"
+            android:label="@string/mailink_launcher_label" />
 
     </application>
 </manifest>
