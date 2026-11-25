@@ -15,6 +15,7 @@ sealed interface ThundermailRoute : Route {
         const val ACCOUNT_ID_ROUTE_PARAM = "accountId"
         const val PERMISSIONS_ROUTE = "$BASE_PATH/permissions/{$ACCOUNT_ID_ROUTE_PARAM}"
         const val ONBOARD_COMPLETE_ROUTE = "$BASE_PATH/onboard-complete"
+        const val IMPORT_COMPLETED_ROUTE = "$BASE_PATH/import-completed"
     }
 
     @Serializable
@@ -46,6 +47,13 @@ sealed interface ThundermailRoute : Route {
     data class Permissions(val accountId: String) : ThundermailRoute {
         override val basePath: String = BASE_PATH
         override fun route(): String = PERMISSIONS_ROUTE
+    }
+
+    /** QR import finished. Closes the account setup flow and returns to the mailbox list. */
+    @Serializable
+    data object ImportCompleted : ThundermailRoute {
+        override val basePath: String = BASE_PATH
+        override fun route(): String = IMPORT_COMPLETED_ROUTE
     }
 
     @Serializable

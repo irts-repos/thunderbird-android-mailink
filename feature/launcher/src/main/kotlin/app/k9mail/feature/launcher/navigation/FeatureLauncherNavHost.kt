@@ -184,6 +184,11 @@ private fun NavGraphBuilder.registerThundermailNavigation(
                     activity.finish()
                 }
 
+                is ThundermailRoute.ImportCompleted -> {
+                    messageListLauncher.launch(accountUuid = null)
+                    activity.finish()
+                }
+
                 is ThundermailRoute.AddAccount ->
                     navController.navigate(ThundermailRoute.AddAccount)
 

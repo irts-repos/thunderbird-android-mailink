@@ -34,7 +34,7 @@ class DefaultThundermailNavigation(
             ) {
                 SettingsImportScreen(
                     action = SettingsImportAction.ScanQrCode,
-                    onImportSuccess = { onFinish(ThundermailRoute.AccountSetup(accountId = null)) },
+                    onImportSuccess = { onFinish(ThundermailRoute.ImportCompleted) },
                     onBack = onBack,
                 )
             }
